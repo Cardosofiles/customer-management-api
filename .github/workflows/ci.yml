@@ -20,6 +20,8 @@ jobs:
     name: Quality (${{ matrix.check }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public'
     strategy:
       fail-fast: false
       matrix:
@@ -58,6 +60,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -96,6 +100,8 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public'
     services:
       # Redis is kept ready for the integration suite (testcontainers spins up
       # PostgreSQL per the testing strategy). Current unit tests do not use it.
