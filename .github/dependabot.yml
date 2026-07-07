@@ -26,6 +26,13 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    groups:
+      # init/analyze (and any other codeql-action sub-action) MUST bump together —
+      # a mixed version pair fails with "Loaded a configuration file for version X,
+      # but running version Y". Batch them into one PR.
+      codeql-action:
+        patterns:
+          - 'github/codeql-action*'
     labels:
       - dependencies
       - github-actions

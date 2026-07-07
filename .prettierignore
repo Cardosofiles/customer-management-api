@@ -6,3 +6,7 @@ src/generated
 .env.*
 *.tsbuildinfo
 coverage
+
+# Machine-generated lockfile — Dependabot regenerates it unformatted, so keep
+# Prettier out of it (otherwise every dependency-bump PR fails `prettier --check`).
+pnpm-lock.yaml
