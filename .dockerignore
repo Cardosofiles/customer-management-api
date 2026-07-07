@@ -1,0 +1,35 @@
+# Build artifacts & deps (reinstalled/regenerated inside the image)
+node_modules
+dist
+coverage
+src/generated
+
+# VCS & CI
+.git
+.gitignore
+.github
+
+# Secrets & local env — never bake into the image
+.env
+.env.*
+!.env.example
+
+# Tooling / editor / agent config
+.vscode
+.claude
+.husk
+.husky
+.eslintcache
+*.tsbuildinfo
+
+# Tests (not needed in the production image)
+**/*.test.ts
+**/*.spec.ts
+vitest.config.ts
+
+# Docker & docs
+Dockerfile
+.dockerignore
+docker-compose.yml
+README.md
+*.md
