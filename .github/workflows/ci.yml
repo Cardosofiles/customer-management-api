@@ -1,0 +1,305 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+# Least privilege by default; raise per-job only when a job truly needs more.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality (${{ matrix.check }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: format
+            command: pnpm exec prettier --check .
+          - check: lint
+            command: pnpm lint
+          # tsup/esbuild does not type-check; `pnpm typecheck` runs `tsc --noEmit`.
+          - check: typecheck
+            command: pnpm typecheck
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      # pnpm version resolved from "packageManager" in package.json —
+      # do not add a "version" input here (action-setup errors on the conflict)
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run ${{ matrix.check }}
+        run: ${{ matrix.command }}
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      # pnpm version resolved from "packageManager" in package.json —
+      # do not add a "version" input here (action-setup errors on the conflict)
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Build (tsup)
+        run: pnpm build
+
+      # Entry point is src/server.ts -> dist/server.js (see tsup.config.ts).
+      - name: Verify build artifact
+        run: test -f dist/server.js
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: api-dist
+          path: dist/
+          retention-days: 7
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      # Redis is kept ready for the integration suite (testcontainers spins up
+      # PostgreSQL per the testing strategy). Current unit tests do not use it.
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      # pnpm version resolved from "packageManager" in package.json —
+      # do not add a "version" input here (action-setup errors on the conflict)
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run tests (coverage thresholds enforced by vitest.config.ts)
+        run: pnpm test:coverage
+        env:
+          NODE_ENV: test
+          # Fake, test-only values — safe to publish. Never reuse real secrets.
+          JWT_SECRET: test-secret-that-is-at-least-32-characters-long
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: api-coverage
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Required gate: fails on high/critical CVEs in production dependencies.
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      # pnpm version resolved from "packageManager" in package.json —
+      # do not add a "version" input here (action-setup errors on the conflict)
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=high
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0 # full history so the scan covers every commit
+          persist-credentials: false
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Scan repository for secrets
+        run: gitleaks git . --config .gitleaks.toml --redact --verbose --exit-code 1
+
+  docker:
+    name: Docker image & smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [quality, build, test]
+    permissions:
+      contents: read
+      actions: read
+      security-events: write # upload Trivy SARIF to the Security tab
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: management_customer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Build production image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          load: true
+          tags: management-customer-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Security gate: block deploy-grade images with fixable CRITICAL/HIGH CVEs.
+      - name: Scan image for vulnerabilities (Trivy)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: management-customer-api:ci
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Upload Trivy results to Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@411c4c9a36b3fca4d674f06b6396b2c6d23522c6 # v3.36.3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-image
+
+      # Real boot: the app must start, connect to Redis, and answer /health.
+      # This catches runtime-only failures that a successful build cannot.
+      - name: Boot container and smoke test /health
+        run: |
+          docker run -d --name api --network host \
+            -e NODE_ENV=production \
+            -e PORT=3333 \
+            -e APP_NAME=management-customer-api \
+            -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/management_customer \
+            -e REDIS_URL=redis://localhost:6379 \
+            -e JWT_SECRET=ci-smoke-secret-that-is-at-least-32-characters-long \
+            -e BETTER_AUTH_SECRET=ci-smoke-secret-that-is-at-least-32-characters-long \
+            -e BETTER_AUTH_URL=http://localhost:3333 \
+            -e RESEND_API_KEY=re_ci_smoke_placeholder \
+            -e EMAIL_FROM=ci@example.com \
+            -e CORS_ORIGIN=http://localhost:3000 \
+            management-customer-api:ci
+          for _ in $(seq 1 30); do
+            if curl -fsS http://localhost:3333/health; then
+              echo
+              echo "Smoke test passed"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Smoke test failed: /health never became available"
+          exit 1
+
+      - name: Show container logs
+        if: failure()
+        run: docker logs api
+
+      - name: Teardown
+        if: always()
+        run: docker rm -f api || true
+
+  # Single required status check for branch protection: green only when every
+  # required job succeeded.
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [quality, build, test, audit, secrets, docker]
+    if: always()
+    steps:
+      - name: Verify all required jobs succeeded
+        run: |
+          results='${{ join(needs.*.result, ',') }}'
+          echo "Job results: $results"
+          case "$results" in
+            *failure*|*cancelled*|*skipped*)
+              echo "One or more required jobs did not succeed"
+              exit 1
+              ;;
+          esac
+          echo "All required jobs passed"

@@ -1,0 +1,49 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Weekly scan (Mondays 03:27 UTC) to catch newly-disclosed query updates.
+    - cron: '27 3 * * 1'
+
+# Least privilege by default; the analyze job raises what it needs.
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      security-events: write # upload results to the Security tab
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@411c4c9a36b3fca4d674f06b6396b2c6d23522c6 # v3.36.3
+        with:
+          languages: ${{ matrix.language }}
+          # Deeper security queries for an auth-bearing API surface.
+          queries: security-extended
+
+      # JavaScript/TypeScript is interpreted — no build step is required.
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@411c4c9a36b3fca4d674f06b6396b2c6d23522c6 # v3.36.3
+        with:
+          category: '/language:${{ matrix.language }}'
