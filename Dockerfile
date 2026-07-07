@@ -58,8 +58,8 @@ USER node
 EXPOSE 3333
 
 # Container-level liveness: the orchestrator restarts the app if /health fails.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3333)+'/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD \
+  node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3333)+'/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/server.js"]

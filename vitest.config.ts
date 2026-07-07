@@ -12,6 +12,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.{test,spec}.ts'],
+    // Populate a valid, hermetic env before any module (notably src/config/env.ts,
+    // which validates process.env at import time) is loaded.
+    setupFiles: ['src/test/setup-env.ts'],
     // Fail the run when coverage drops below the thresholds — the CI "test"
     // job relies on this instead of a separate gate.
     coverage: {
