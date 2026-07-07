@@ -11,10 +11,10 @@ export const PAGINATION = {
 } as const;
 
 export const CACHE_TTL = {
-  PRODUCTS: 60 * 5,    // 5 min
+  PRODUCTS: 60 * 5, // 5 min
   CATEGORIES: 60 * 60, // 1h
-  SHIPPING: 60 * 60,   // 1h
-  USER: 60 * 15,       // 15 min
+  SHIPPING: 60 * 60, // 1h
+  USER: 60 * 15, // 15 min
 } as const;
 
 export const UPLOAD = {
