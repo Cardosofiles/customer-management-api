@@ -17,6 +17,8 @@ WORKDIR /app
 # ── Install all dependencies (layer cached by the lockfile) ───────────────────
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
+COPY scripts/prepare.mjs ./scripts/prepare.mjs
+ENV HUSKY=0
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # ── Build: generate the Prisma client, then bundle with tsup ──────────────────
@@ -31,6 +33,8 @@ RUN pnpm db:generate && pnpm build
 # ── Production dependencies only ──────────────────────────────────────────────
 FROM base AS prod-deps
 COPY package.json pnpm-lock.yaml ./
+COPY scripts/prepare.mjs ./scripts/prepare.mjs
+ENV HUSKY=0
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
 
 # ── Runner: minimal, non-root runtime ─────────────────────────────────────────

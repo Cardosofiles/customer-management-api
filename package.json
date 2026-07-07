@@ -23,7 +23,7 @@
     "dc:down": "docker compose down",
     "dc:clean": "docker compose down -v",
     "dc:logs": "docker compose logs -f",
-    "prepare": "husky"
+    "prepare": "node scripts/prepare.mjs"
   },
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
