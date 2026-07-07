@@ -102,6 +102,14 @@ jobs:
     timeout-minutes: 30
     env:
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public'
+      NODE_ENV: test
+      APP_NAME: management-customer-api
+      JWT_SECRET: test-secret-that-is-at-least-32-characters-long
+      BETTER_AUTH_SECRET: test-secret-that-is-at-least-32-characters-long
+      BETTER_AUTH_URL: http://localhost:3333
+      RESEND_API_KEY: re_ci_smoke_placeholder
+      EMAIL_FROM: ci@example.com
+      CORS_ORIGIN: http://localhost:3000
     services:
       # Redis is kept ready for the integration suite (testcontainers spins up
       # PostgreSQL per the testing strategy). Current unit tests do not use it.
@@ -137,9 +145,6 @@ jobs:
       - name: Run tests (coverage thresholds enforced by vitest.config.ts)
         run: pnpm test:coverage
         env:
-          NODE_ENV: test
-          # Fake, test-only values — safe to publish. Never reuse real secrets.
-          JWT_SECRET: test-secret-that-is-at-least-32-characters-long
           REDIS_URL: redis://localhost:6379
 
       - name: Upload coverage artifact
