@@ -1,6 +1,6 @@
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -27,10 +27,14 @@ export default tseslint.config(
     ignores: [
       'dist/**',
       'node_modules/**',
+      'coverage/**',
       'src/generated/**',
       'eslint.config.mjs',
       'prisma.config.ts',
       'tsup.config.ts',
+      'vitest.config.ts',
+      'commitlint.config.mjs',
+      '.lintstagedrc.mjs',
     ],
   },
 );
