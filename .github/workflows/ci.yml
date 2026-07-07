@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/management_customer?schema=public"
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public'
     strategy:
       fail-fast: false
       matrix:
@@ -44,8 +44,8 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "22"
-          cache: "pnpm"
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/management_customer?schema=public"
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -73,8 +73,8 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "22"
-          cache: "pnpm"
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/management_customer?schema=public"
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public'
       NODE_ENV: test
       APP_NAME: management-customer-api
       JWT_SECRET: test-secret-that-is-at-least-32-characters-long
@@ -133,8 +133,8 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: "22"
-          cache: "pnpm"
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -250,7 +250,7 @@ jobs:
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          exit-code: "1"
+          exit-code: '1'
 
       - name: Upload Trivy results to Security tab
         if: always()

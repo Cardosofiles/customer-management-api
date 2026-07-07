@@ -35,6 +35,7 @@ export default tseslint.config(
       'vitest.config.ts',
       'commitlint.config.mjs',
       '.lintstagedrc.mjs',
+      'scripts/**',
     ],
   },
 );
