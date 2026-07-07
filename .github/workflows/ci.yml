@@ -242,15 +242,27 @@ jobs:
           cache-to: type=gha,mode=max
 
       # Security gate: block deploy-grade images with fixable CRITICAL/HIGH CVEs.
-      - name: Scan image for vulnerabilities (Trivy)
+      # Table format so the offending CVE is printed directly in the CI log
+      # (a SARIF-only scan hides which package/CVE tripped the gate).
+      - name: Scan image for vulnerabilities (Trivy gate)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: management-customer-api:ci
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      # Full SARIF (all severities) for the Security tab — informational only,
+      # never blocks, and still runs when the gate above fails.
+      - name: Generate Trivy SARIF report
+        if: always()
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: management-customer-api:ci
           format: sarif
           output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          exit-code: '1'
+          exit-code: '0'
 
       - name: Upload Trivy results to Security tab
         if: always()
@@ -289,7 +301,9 @@ jobs:
 
       - name: Show container logs
         if: failure()
-        run: docker logs api
+        # Tolerate a missing container: an earlier step (e.g. the Trivy gate) can
+        # fail before the smoke test ever starts `api`.
+        run: docker logs api || true
 
       - name: Teardown
         if: always()

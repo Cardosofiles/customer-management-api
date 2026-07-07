@@ -44,9 +44,14 @@ ENV PORT=3333
 WORKDIR /app
 
 # dumb-init gives the app a real init as PID 1 (signal forwarding + zombie reaping).
+# The npm CLI bundled in the base image is never used at runtime (the app runs
+# `node dist/server.js`); removing it drops npm's vulnerable transitive deps
+# (e.g. picomatch CVE-2026-33671, sigstore CVE-2026-48815) and shrinks the
+# attack surface — the Trivy gate scans these bundled node_modules.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends dumb-init \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
