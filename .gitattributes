@@ -1,0 +1,19 @@
+# Normalize line endings to LF on commit so the Prettier "--check" gate stays
+# green regardless of a contributor's core.autocrlf setting or OS.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF to run correctly.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Generated/vendored files: don't show diffs, mark as generated on GitHub.
+pnpm-lock.yaml linguist-generated -diff
+
+# Treat common binaries as binary (no EOL/diff processing).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

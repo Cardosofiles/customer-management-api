@@ -1,10 +1,11 @@
 node_modules
 dist
 .env
+!.env.*
 .eslintcache
 *.tsbuildinfo
 coverage
 src/generated
-.vscode/*
+.vscode
 !.vscode/settings.json
 !.vscode/extensions.json

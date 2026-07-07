@@ -1,0 +1,21 @@
+# Gitleaks configuration.
+# Uses the bundled default rule set, then allowlists values that are known to be
+# non-secret (CI smoke/test placeholders and example env files), so the secret
+# scan gate does not fail on obviously-fake data committed on purpose.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known-safe, non-secret placeholders used by CI and examples."
+# Allowlist by matched value only — workflow files are still fully scanned, so a
+# real secret hardcoded in a workflow is not silently skipped.
+regexTarget = "match"
+regexes = [
+  '''re_ci_smoke_placeholder''',
+  '''ci-smoke-secret-that-is-at-least-32-characters-long''',
+  '''test-secret-that-is-at-least-32-characters-long''',
+]
+paths = [
+  '''\.env\.example$''',
+]
