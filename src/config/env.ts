@@ -15,8 +15,10 @@ const envSchema = z
         message: 'DATABASE_URL deve ser uma connection string PostgreSQL válida',
       }),
     REDIS_URL: z.url().default('redis://localhost:6379'),
-    JWT_SECRET: z.string().min(32, 'JWT_SECRET deve ter ao menos 32 caracteres'),
     CORS_ORIGIN: z.string().optional(),
+    // Fastify trustProxy: seguro por padrão (false). Atrás de um LB/reverse proxy,
+    // defina o nº de hops confiáveis (ex.: "1") ou o CIDR do proxy ("10.0.0.0/8").
+    TRUST_PROXY: z.string().optional(),
     API_URL: z.string().optional(),
     APP_URL: z.url('APP_URL deve ser uma URL válida').default('http://localhost:3000'),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),

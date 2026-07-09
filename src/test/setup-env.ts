@@ -10,7 +10,6 @@ process.env.NODE_ENV ??= 'test';
 process.env.APP_NAME ??= 'management-customer-api';
 process.env.DATABASE_URL ??=
   'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public';
-process.env.JWT_SECRET ??= 'test-secret-that-is-at-least-32-characters-long';
 process.env.BETTER_AUTH_SECRET ??= 'test-secret-that-is-at-least-32-characters-long';
 process.env.BETTER_AUTH_URL ??= 'http://localhost:3333';
 process.env.RESEND_API_KEY ??= 're_ci_smoke_placeholder';

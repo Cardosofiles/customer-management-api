@@ -3,6 +3,7 @@ import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { admin, magicLink, twoFactor, username } from 'better-auth/plugins';
 
+import { RATE_LIMIT } from '@/config/constants.js';
 import { env } from '@/config/env.js';
 import { logger } from '@/shared/logger/logger.js';
 import {
@@ -14,6 +15,7 @@ import {
 } from './email/index.js';
 import { ac, roles } from './permissions.js';
 import { prisma } from './prisma.js';
+import { redis } from './redis.js';
 
 /**
  * Better Auth server instance.
@@ -48,6 +50,20 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+
+  // Redis como secondary storage: acelera a leitura de sessões e serve de store
+  // do rate-limit (unifica com a camada Fastify `@fastify/rate-limit`). As
+  // sessões seguem persistidas no Postgres via `session.storeSessionInDatabase`.
+  secondaryStorage: {
+    get: async (key) => (await redis.get(key)) ?? null,
+    set: async (key, value, ttl) => {
+      if (ttl) await redis.set(key, value, 'EX', ttl);
+      else await redis.set(key, value);
+    },
+    delete: async (key) => {
+      await redis.del(key);
+    },
+  },
 
   emailAndPassword: {
     enabled: true,
@@ -94,10 +110,18 @@ export const auth = betterAuth({
   socialProviders,
 
   rateLimit: {
+    enabled: true, // default do Better Auth só liga em produção; ativamos em todos os ambientes
     window: 60,
     max: 100,
-    storage: 'database',
+    storage: 'secondary-storage',
     customRules: {
+      // Teto estrito nos endpoints sensíveis a brute-force (path-aware).
+      '/sign-in/email': RATE_LIMIT.AUTH,
+      '/sign-up/email': RATE_LIMIT.AUTH,
+      '/forget-password': RATE_LIMIT.AUTH,
+      '/reset-password': RATE_LIMIT.AUTH,
+      '/two-factor/*': RATE_LIMIT.AUTH,
+      // getSession roda em toda rota protegida (requireAuth) — não limitar.
       '/get-session': false,
       '/get-session*': false,
     },
@@ -106,6 +130,9 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // refresh token if older than 1 day
+    // Leitura de sessão vem do Redis (secondaryStorage); manter também no Postgres
+    // preserva o histórico durável e o model `Session` do schema.
+    storeSessionInDatabase: true,
     cookieCache: {
       enabled: true,
       maxAge: 300, // 5 minutes

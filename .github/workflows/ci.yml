@@ -104,7 +104,6 @@ jobs:
       DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/management_customer?schema=public'
       NODE_ENV: test
       APP_NAME: management-customer-api
-      JWT_SECRET: test-secret-that-is-at-least-32-characters-long
       BETTER_AUTH_SECRET: test-secret-that-is-at-least-32-characters-long
       BETTER_AUTH_URL: http://localhost:3333
       RESEND_API_KEY: re_ci_smoke_placeholder
@@ -281,7 +280,6 @@ jobs:
             -e APP_NAME=management-customer-api \
             -e DATABASE_URL=postgresql://postgres:postgres@localhost:5432/management_customer \
             -e REDIS_URL=redis://localhost:6379 \
-            -e JWT_SECRET=ci-smoke-secret-that-is-at-least-32-characters-long \
             -e BETTER_AUTH_SECRET=ci-smoke-secret-that-is-at-least-32-characters-long \
             -e BETTER_AUTH_URL=http://localhost:3333 \
             -e RESEND_API_KEY=re_ci_smoke_placeholder \

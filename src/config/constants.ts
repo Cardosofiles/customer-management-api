@@ -23,6 +23,9 @@ export const UPLOAD = {
 } as const;
 
 export const RATE_LIMIT = {
+  // Camada Fastify (@fastify/rate-limit): teto grosseiro por IP em toda a API.
   GLOBAL: { max: 100, timeWindow: '1 minute' },
-  AUTH: { max: 5, timeWindow: '1 minute' },
+  // Camada Better Auth (customRules, path-aware): teto estrito nos endpoints
+  // sensíveis a brute-force. Formato Better Auth → `window` em segundos.
+  AUTH: { window: 60, max: 5 },
 } as const;

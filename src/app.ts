@@ -6,6 +6,19 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 
+/**
+ * Resolve a config de `trustProxy` do Fastify a partir do env. Seguro por padrão
+ * (`false`): sem proxy confiável, `request.ip` é o IP do socket (não spoofável),
+ * o que impede burlar o rate-limit forjando `X-Forwarded-For`. Atrás de um LB,
+ * defina TRUST_PROXY com o nº de hops confiáveis ("1") ou o CIDR do proxy.
+ */
+function parseTrustProxy(raw: string | undefined): boolean | number | string {
+  if (!raw || raw.toLowerCase() === 'false') return false;
+  if (raw.toLowerCase() === 'true') return true;
+  const hops = Number(raw);
+  return Number.isInteger(hops) && hops >= 0 ? hops : raw;
+}
+
 export async function buildApp() {
   const app = Fastify({
     logger: {
@@ -28,7 +41,7 @@ export async function buildApp() {
         useDefaults: true,
       },
     },
-    trustProxy: true,
+    trustProxy: parseTrustProxy(env.TRUST_PROXY),
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setSerializerCompiler(serializerCompiler);
