@@ -9,9 +9,12 @@ export default fp(
       max: RATE_LIMIT.GLOBAL.max,
       timeWindow: RATE_LIMIT.GLOBAL.timeWindow,
       redis: app.redis,
-      // `trustProxy` já resolve o IP real do cliente a partir do X-Forwarded-For;
-      // usar request.ip evita spoofing via header cru.
+      // `request.ip` honra o `trustProxy` do Fastify (ver app.ts, default seguro
+      // `false`): sem proxy confiável é o IP do socket, não spoofável via header.
       keyGenerator: (request) => request.ip,
+      // Se o store (Redis) falhar, degrada para "sem limite" em vez de derrubar a
+      // API inteira (fail-open). A queda do Redis é logada no plugin `redis`.
+      skipOnError: true,
       errorResponseBuilder: () => ({
         code: 'RATE_LIMIT_EXCEEDED',
         message: 'Muitas requisições. Tente novamente em breve.',

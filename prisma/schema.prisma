@@ -146,13 +146,3 @@ model Passkey {
   @@index([credentialID])
   @@map("passkey")
 }
-
-model RateLimit {
-  id          String @id
-  key         String
-  count       Int
-  lastRequest BigInt
-
-  @@unique([key])
-  @@map("rateLimit")
-}
