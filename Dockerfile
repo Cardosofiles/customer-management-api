@@ -49,7 +49,7 @@ WORKDIR /app
 # (e.g. picomatch CVE-2026-33671, sigstore CVE-2026-48815) and shrinks the
 # attack surface — the Trivy gate scans these bundled node_modules.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends dumb-init \
+  && apt-get install -y --no-install-recommends dumb-init openssl \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
