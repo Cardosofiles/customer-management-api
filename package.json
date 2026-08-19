@@ -27,7 +27,7 @@
   },
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@better-auth/passkey": "^1.6.23",
+    "@better-auth/passkey": "^1.6.29",
     "@fastify/compress": "^9.0.0",
     "@fastify/cors": "^11.2.0",
     "@fastify/helmet": "^13.0.2",
