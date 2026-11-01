@@ -1,49 +1,49 @@
-version: 2
-updates:
-  # Application dependencies (pnpm).
-  - package-ecosystem: npm
-    directory: '/'
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 10
-    versioning-strategy: increase
-    groups:
-      # Batch low-risk updates into single PRs to cut review noise.
-      dev-dependencies:
-        dependency-type: development
-        update-types: [minor, patch]
-      production-minor-patch:
-        dependency-type: production
-        update-types: [minor, patch]
-    labels:
-      - dependencies
+# version: 2
+# updates:
+#   # Application dependencies (pnpm).
+#   - package-ecosystem: npm
+#     directory: '/'
+#     schedule:
+#       interval: weekly
+#       day: monday
+#     open-pull-requests-limit: 10
+#     versioning-strategy: increase
+#     groups:
+#       # Batch low-risk updates into single PRs to cut review noise.
+#       dev-dependencies:
+#         dependency-type: development
+#         update-types: [minor, patch]
+#       production-minor-patch:
+#         dependency-type: production
+#         update-types: [minor, patch]
+#     labels:
+#       - dependencies
 
-  # GitHub Actions — keeps the SHA-pinned actions in ci.yml current.
-  - package-ecosystem: github-actions
-    directory: '/'
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    groups:
-      # init/analyze (and any other codeql-action sub-action) MUST bump together —
-      # a mixed version pair fails with "Loaded a configuration file for version X,
-      # but running version Y". Batch them into one PR.
-      codeql-action:
-        patterns:
-          - 'github/codeql-action*'
-    labels:
-      - dependencies
-      - github-actions
+#   # GitHub Actions — keeps the SHA-pinned actions in ci.yml current.
+#   - package-ecosystem: github-actions
+#     directory: '/'
+#     schedule:
+#       interval: weekly
+#       day: monday
+#     open-pull-requests-limit: 5
+#     groups:
+#       # init/analyze (and any other codeql-action sub-action) MUST bump together —
+#       # a mixed version pair fails with "Loaded a configuration file for version X,
+#       # but running version Y". Batch them into one PR.
+#       codeql-action:
+#         patterns:
+#           - 'github/codeql-action*'
+#     labels:
+#       - dependencies
+#       - github-actions
 
-  # Base images referenced by the Dockerfile.
-  - package-ecosystem: docker
-    directory: '/'
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - docker
+#   # Base images referenced by the Dockerfile.
+#   - package-ecosystem: docker
+#     directory: '/'
+#     schedule:
+#       interval: weekly
+#       day: monday
+#     open-pull-requests-limit: 5
+#     labels:
+#       - dependencies
+#       - docker
